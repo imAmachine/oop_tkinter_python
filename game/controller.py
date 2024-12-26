@@ -13,9 +13,15 @@ class Controller:
         self.game_manager.game_field.bind("<KeyRelease-Down>", self.stop_move)
 
         self.game_manager.game_field.bind("<KeyPress-Up>", self.rotate_figure)
+        
+        self.game_manager.game_field.bind("<KeyPress-space>", self.start_game)
 
         self.game_manager.game_field.focus_set()
 
+    def start_game(self, event):
+        if not self.game_manager.game_started:
+            self.game_manager.start_game()
+    
     def start_move_left(self, event):
         self.stop_move()
         self.move_figure(-1, 0)

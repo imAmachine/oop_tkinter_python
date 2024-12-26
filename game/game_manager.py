@@ -20,22 +20,22 @@ class GameManager:
         field_width = field_config.cell_size * field_config.field_size[0]
         field_height = field_config.cell_size * field_config.field_size[1]
         
-        self.game_container.grid_columnconfigure(0, minsize=field_width + 10)
-        self.game_container.grid_columnconfigure(1, minsize=preview_width + 10)
+        self.game_container.grid_columnconfigure(0, minsize=field_width, weight=0)
+        self.game_container.grid_columnconfigure(1, minsize=preview_width, weight=1)
         self.game_container.grid_rowconfigure(0, weight=1)
-        self.game_container.grid_rowconfigure(0, weight=1, minsize=100)
 
         # Основное поле игры
         self.game_field = GameField(field_config, master=self.game_container)
         self.game_field.grid(row=0, column=0, padx=5, pady=0, sticky='n')
 
         # Поле предпросмотра
+        preview_config.field_size = (0, 0)
         self.preview_field = GameField(preview_config, master=self.game_container)
         self.preview_field.grid(row=0, column=1, padx=0, pady=30, sticky='n')
         
         # Метка для отображения очков под полем предпросмотра
         self.score_label = Label(self.game_container, text=f"Очки: {self.score}", font=("Arial", 12))
-        self.score_label.grid(row=0, column=1, padx=10, pady=5, sticky='n')
+        self.score_label.grid(row=0, column=1, padx=0, pady=5, sticky='n')
 
         # установка размера canvas у поля
         self.game_field.config(width=field_width, height=field_height)
@@ -47,21 +47,40 @@ class GameManager:
         # логика управления
         self.controller = Controller(self)
 
+        # фигуры и время падения
         self.current_figure = None
         self.next_figure = None
         self.down_ms = 400
 
+        # Метка завершения игры
+        self.game_over_label = Label(self.game_field, text="Игра завершена\nЧтобы начать новую игру, нажмите <space>", font=("Arial", 12), fg="red", bg="black")
+        self.game_over_label.place(relx=0.5, rely=0.5, anchor="center")
+        self.fg_down_timer = None # таймер для падения фигуры
+
+    def _start_timer(self):
+        """Запускает таймер для перемещения фигуры вниз."""
+        self._stop_timer()
+        
+        if self.game_started:
+            self.fg_down_timer = self.game_field.after(self.down_ms, self._move_down)
+
+    def _stop_timer(self):
+        if self.fg_down_timer:
+            self.game_field.after_cancel(self.fg_down_timer)  # Остановка таймера
+            self.fg_down_timer = None
+    
     def start_game(self):
         """Запускает новую игру, сбрасывая параметры."""
         self.game_started = True
         self.score = 0
 
+        self.game_over_label.place_forget()  # Скрыть сообщение о завершении игры
         self.game_field.clear_occupied()
         self._create_figure_for_preview()
         self._spawn_current_figure()
         
-        # таймеры
-        self.game_field.after(self.down_ms, self._move_down)
+        # Установка таймера
+        self._start_timer()
 
     def update_score(self, lines_count):
         """Обновляет очки и обновляет текст метки."""
@@ -99,11 +118,23 @@ class GameManager:
         self._create_figure_for_preview()
 
         fg_size = self.current_figure.get_size()
-        x = self.game_field.field_config.field_size[0] // 2 - fg_size[0] // 2 - 1
+        x = self.game_field.field_config.field_size[0] // 2 - fg_size[0] // 2
         self.current_figure.set_position(x=x)
 
+        if self._check_collision(0, 0):
+            self.game_started = False
+            self.end_game()
+            return
+        
         self.figure_renderer.figure = self.current_figure
         self.figure_renderer.update()
+        
+    def end_game(self):
+        """Логика завершения игры."""
+        self._stop_timer()
+        self.current_figure = None
+        self.next_figure = None
+        self.game_over_label.place(relx=0.5, rely=0.5, anchor="center")
 
     def move_figure(self, dx, dy) -> bool:
         """Перемещает фигуру, если нет столкновений."""
@@ -145,4 +176,3 @@ class GameManager:
         
         self.check_lines(self.current_figure.position[1] - 1)
         self.game_field.update()
-

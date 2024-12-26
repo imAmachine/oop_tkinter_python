@@ -3,7 +3,7 @@ from tkinter import Canvas, Misc
 from typing import Any
 from game.structs.grid_renderer import GridRenderer
 from interfaces import IRender
-from window.structs.field_config import FieldConfig
+from window.field_config import FieldConfig
 
 class GameField(Canvas, IRender):
     def __init__(self, field_config: FieldConfig, master: Misc | None = None, **kwargs: Any) -> None:
