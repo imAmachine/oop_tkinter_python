@@ -87,5 +87,3 @@ class GameField(Canvas, IRender):
         end_time = time.perf_counter()
         execution_time = end_time - start_time
         print(f"Время выполнения метода draw: {execution_time:.6f} секунд")
-
-        
