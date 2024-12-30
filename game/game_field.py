@@ -1,9 +1,11 @@
-import tkinter as tk
 from tkinter import Canvas, Misc
 from typing import Any
 from game.structs.grid_renderer import GridRenderer
 from interfaces import IRender
 from window.field_config import FieldConfig
+
+import time
+
 
 class GameField(Canvas, IRender):
     def __init__(self, field_config: FieldConfig, master: Misc | None = None, **kwargs: Any) -> None:
@@ -43,7 +45,7 @@ class GameField(Canvas, IRender):
 
     def remove_row(self, y):
         """Удаляет все блоки на указанной строке и сдвигает блоки выше вниз."""
-        # Удаление всех блоков на строки y
+        # Удаление всех блоков на строке y
         self.occupied_cells = [cell for cell in self.occupied_cells if cell["y"] != y]
 
         # Сдвигаем блоки выше на одну строку вниз
@@ -72,6 +74,8 @@ class GameField(Canvas, IRender):
 
     def draw(self):
         """Перерисовывает все блоки на экране."""
+        start_time = time.perf_counter()
+        
         for cell in self.occupied_cells:
             self._draw_cell(cell['x'], cell['y'], cell['color'])
         
@@ -79,5 +83,9 @@ class GameField(Canvas, IRender):
         self.update_canvas_size(width=cell_size * self.field_config.field_size[0], height=cell_size * self.field_config.field_size[1])
         self.grid_renderer = GridRenderer(self, self.field_config)
         self.grid_renderer.draw()
+        
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+        print(f"Время выполнения метода draw: {execution_time:.6f} секунд")
 
         
